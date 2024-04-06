@@ -12,7 +12,44 @@ struct Todo: Codable {
 
 var subscriptions = Set<AnyCancellable>()
 
-<#Add your code here#>
+example(of: "dataTaskPublisher") {
+	guard let url = URL(string: "https://jsonplaceholder.typicode.com/todos/1") else {
+		return
+	}
+	
+	URLSession.shared
+		.dataTaskPublisher(for: url)
+		.sink(receiveCompletion: { completion in
+			if case .failure(let err) = completion {
+				print("Retrieving data failed with error \(err)")
+			}
+		}, receiveValue: { data, response in
+			print("Received data pf size \(data.count), response \(response)")
+		})
+		.store(in: &subscriptions)
+}
+
+example(of: "decode") {
+	guard let url = URL(string: "https://jsonplaceholder.typicode.com/todos/1") else {
+		return
+	}
+	
+	URLSession.shared
+		.dataTaskPublisher(for: url)
+//		.tryMap { data, _ in
+//			try JSONDecoder().decode(Todo.self, from: data)
+//		}
+		.map(\.data)
+		.decode(type: Todo.self, decoder: JSONDecoder())
+		.sink(receiveCompletion: { completion in
+			if case .failure(let err) = completion {
+				print("Retrieving data failed with error \(err)")
+			}
+		}, receiveValue: { object in
+			print("Received object \(object)")
+		})
+		.store(in: &subscriptions)
+}
 
 /// Copyright (c) 2021 Razeware LLC
 ///
